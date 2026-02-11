@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Button } from "@/components/ui/button";
-import { useLanguage, AppLanguage } from "./LanguageProvider";
+import { useLanguage } from "./LanguageProvider";
 import SiteDisclosuresFooter from "@/components/SiteDisclosuresFooter";
 import Image from "next/image";
 import {
@@ -17,6 +17,11 @@ import {
   ChevronRight,
   ChevronDown,
   ArrowRight,
+  User,
+  Mail,
+  X,
+  Check,
+  Pencil,
 } from "lucide-react";
 
 import NinjaTraderWordmark from "../../ninjatrader/Landing-Page-Text-Images/NinjaTrader/NinjaTrader_Wordmark_color_RGB.png";
@@ -28,8 +33,123 @@ const talariaBrands = [
   { name: "Talaria-Copy", href: "#" },
 ];
 
+const COUNTRIES = [
+  "Algeria", "Bahrain", "Comoros", "Djibouti", "Egypt", "Iraq", "Jordan", "Kuwait", 
+  "Lebanon", "Libya", "Mauritania", "Morocco", "Oman", "Palestine", "Qatar", 
+  "Saudi Arabia", "Somalia", "Sudan", "Syria", "Tunisia", "United Arab Emirates", "Yemen",
+  "Afghanistan", "Albania", "Andorra", "Angola", "Argentina", "Armenia", "Australia", 
+  "Austria", "Azerbaijan", "Bahamas", "Bangladesh", "Barbados", "Belarus", "Belgium", 
+  "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", 
+  "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada", 
+  "Cape Verde", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Congo", 
+  "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Dominica", 
+  "Dominican Republic", "Ecuador", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", 
+  "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", 
+  "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", 
+  "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Ireland", 
+  "Italy", "Jamaica", "Japan", "Kazakhstan", "Kenya", "Kiribati", "Kyrgyzstan", "Laos", 
+  "Latvia", "Lesotho", "Liberia", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", 
+  "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritius", 
+  "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Mozambique", 
+  "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", 
+  "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Pakistan", "Palau", 
+  "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", 
+  "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", 
+  "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", 
+  "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", 
+  "Solomon Islands", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", 
+  "Suriname", "Sweden", "Switzerland", "Taiwan", "Tajikistan", "Tanzania", "Thailand", 
+  "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Turkey", "Turkmenistan", "Tuvalu", 
+  "Uganda", "Ukraine", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", 
+  "Vatican City", "Venezuela", "Vietnam", "Zambia", "Zimbabwe"
+];
+
 export default function HomePage() {
-  const { isArabic, toggleLanguage, language } = useLanguage();
+  const { isArabic } = useLanguage();
+  const [user, setUser] = React.useState<{ id: number; name: string; email: string; phone?: string; country?: string } | null>(null);
+  const [showProfile, setShowProfile] = React.useState(false);
+  const [editMode, setEditMode] = React.useState(false);
+  const [editName, setEditName] = React.useState("");
+  const [editPhone, setEditPhone] = React.useState("");
+  const [editCountry, setEditCountry] = React.useState("");
+  const [countryQuery, setCountryQuery] = React.useState("");
+  const [countryDropdownOpen, setCountryDropdownOpen] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const profileRef = React.useRef<HTMLDivElement>(null);
+  const countryDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const filteredCountries = React.useMemo(() => {
+    const q = countryQuery.toLowerCase().trim();
+    if (!q) return COUNTRIES;
+    return COUNTRIES.filter(c => c.toLowerCase().includes(q));
+  }, [countryQuery]);
+
+  React.useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null));
+  }, []);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfile(false);
+        setEditMode(false);
+        setCountryDropdownOpen(false);
+      }
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {}
+    setUser(null);
+    window.location.href = "/";
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          name: editName.trim() || undefined, 
+          phone: editPhone.trim() || undefined, 
+          country: editCountry.trim() || undefined 
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setEditMode(false);
+      }
+    } catch {}
+    setSaving(false);
+  };
+
+  const startEdit = () => {
+    setEditName(user?.name || "");
+    setEditPhone(user?.phone || "");
+    setEditCountry(user?.country || "");
+    setCountryQuery(user?.country || "");
+    setCountryDropdownOpen(false);
+    setEditMode(true);
+  };
+
+  const onCountrySelect = (country: string) => {
+    setEditCountry(country);
+    setCountryQuery(country);
+    setCountryDropdownOpen(false);
+  };
 
   const t = React.useMemo(
     () =>
@@ -46,7 +166,7 @@ export default function HomePage() {
                 "",
             },
             footer: {
-              brandLine: "أدوات تداول احترافية للمتداولين الجادّين.",
+              brandLine: "أدوات تداول احترافية للمتداولين الجادّين",
               legal: "",
               privacy: "سياسة الخصوصية",
               terms: "شروط الخدمة",
@@ -54,7 +174,7 @@ export default function HomePage() {
               disclaimer: "إخلاء مسؤولية التداول",
               contact: "تواصل",
               emailSupport: "دعم عبر البريد الإلكتروني",
-              rights: "© 2026 Talaria Log جميع الحقوق محفوظة.",
+              rights: "© 2026 Talaria Log جميع الحقوق محفوظة",
               riskLine:
                 "",
             },
@@ -257,29 +377,154 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleLanguage}
-                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
-              >
-                {language === "en" ? "AR" : "EN"}
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-4"
-              >
-                <Link href="/login/?mode=signin">{isArabic ? "دخول" : "Login"}</Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                className="rounded-full text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-400 shadow-[0_0_0_1px_rgba(99,102,241,0.25),0_14px_40px_rgba(59,130,246,0.25)] text-xs sm:text-sm px-2 sm:px-4"
-              >
-                <Link href="/login/?mode=signup">{isArabic ? "حساب جديد" : "Sign up"}</Link>
-              </Button>
+              {user ? (
+                <>
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => setShowProfile(!showProfile)}
+                      className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold border border-white/20 hover:scale-105 transition-transform cursor-pointer"
+                    >
+                      {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                    </button>
+                    {showProfile && (
+                      <div className="fixed sm:absolute top-16 sm:top-10 left-4 right-4 sm:left-auto sm:right-0 sm:w-72 bg-[#0a0a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-4 z-50">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-white font-semibold">{isArabic ? "الملف الشخصي" : "Profile"}</h3>
+                          <button onClick={() => { setShowProfile(false); setEditMode(false); }} className="text-white/50 hover:text-white">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex flex-col items-center mb-4">
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white text-2xl font-semibold mb-3">
+                            {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                          </div>
+                          {editMode ? (
+                            <div className="flex flex-col gap-2 w-full">
+                              <input
+                                type="text"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-blue-500"
+                                placeholder={isArabic ? "الاسم" : "Name"}
+                                autoFocus
+                              />
+                              <div ref={countryDropdownRef} className="relative">
+                                <input
+                                  type="text"
+                                  value={countryQuery}
+                                  onFocus={() => setCountryDropdownOpen(true)}
+                                  onChange={(e) => {
+                                    setCountryQuery(e.target.value);
+                                    setCountryDropdownOpen(true);
+                                    if (editCountry && e.target.value !== editCountry) {
+                                      setEditCountry("");
+                                    }
+                                  }}
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-blue-500"
+                                  placeholder={isArabic ? "ابحث عن دولة" : "Search country"}
+                                  dir="ltr"
+                                />
+                                {countryDropdownOpen && (
+                                  <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-[#0a0a1a] shadow-xl">
+                                    {filteredCountries.length > 0 ? (
+                                      filteredCountries.slice(0, 20).map((c) => (
+                                        <button
+                                          key={c}
+                                          type="button"
+                                          className="w-full px-3 py-1.5 text-sm text-white hover:bg-white/10 text-left"
+                                          onClick={() => onCountrySelect(c)}
+                                        >
+                                          {c}
+                                        </button>
+                                      ))
+                                    ) : (
+                                      <div className="px-3 py-2 text-sm text-white/50">
+                                        {isArabic ? "لا توجد نتائج" : "No results"}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={editPhone}
+                                onChange={(e) => setEditPhone(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-blue-500"
+                                placeholder={isArabic ? "رقم الهاتف" : "Phone"}
+                                dir="ltr"
+                              />
+                              <div className="flex items-center gap-2 justify-end">
+                                <button
+                                  onClick={handleSaveProfile}
+                                  disabled={saving}
+                                  className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-50 text-sm"
+                                >
+                                  {saving ? (isArabic ? "جارٍ الحفظ..." : "Saving...") : (isArabic ? "حفظ" : "Save")}
+                                </button>
+                                <button
+                                  onClick={() => setEditMode(false)}
+                                  className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm"
+                                >
+                                  {isArabic ? "إلغاء" : "Cancel"}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">{user.name || (isArabic ? "بدون اسم" : "No name")}</span>
+                              <button onClick={startEdit} className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-3 text-sm text-white/70 bg-white/5 rounded-lg px-3 py-2" dir="ltr">
+                            <Mail className="w-4 h-4" />
+                            <span className="truncate text-left">{user.email}</span>
+                          </div>
+                          {user.phone && (
+                            <div className="flex items-center gap-3 text-sm text-white/70 bg-white/5 rounded-lg px-3 py-2" dir="ltr">
+                              <span className="w-4 h-4 text-center">📱</span>
+                              <span className="truncate text-left">{user.phone}</span>
+                            </div>
+                          )}
+                          {user.country && (
+                            <div className="flex items-center gap-3 text-sm text-white/70 bg-white/5 rounded-lg px-3 py-2" dir="ltr">
+                              <span className="w-4 h-4 text-center">🌍</span>
+                              <span className="truncate text-left">{user.country}</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full py-2 rounded-lg text-sm text-white bg-gradient-to-r from-red-600 via-pink-600 to-red-500 hover:from-red-500 hover:via-pink-500 hover:to-red-400 transition-all"
+                        >
+                          {isArabic ? "تسجيل الخروج" : "Sign out"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-4"
+                  >
+                    <Link href="/login/?mode=signin">{isArabic ? "دخول" : "Login"}</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="rounded-full text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-400 shadow-[0_0_0_1px_rgba(99,102,241,0.25),0_14px_40px_rgba(59,130,246,0.25)] text-xs sm:text-sm px-2 sm:px-4"
+                  >
+                    <Link href="/login/?mode=signup">{isArabic ? "حساب جديد" : "Sign up"}</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -299,23 +544,18 @@ export default function HomePage() {
                 </Button>
               </Link>
               <div className="relative group">
-                <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
+                <Button className="rounded-full text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 text-white/50 bg-gradient-to-r from-black via-blue-900/50 to-blue-600/50 shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_18px_45px_rgba(37,99,235,0.15)] cursor-not-allowed opacity-60">
                   <span className="tg-mask" aria-hidden="true" />
                 </Button>
-                <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
+                <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
               </div>
               <div className="relative group">
-                <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
+                <Button className="rounded-full text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 text-white/50 bg-gradient-to-r from-black via-blue-900/50 to-blue-600/50 shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_18px_45px_rgba(37,99,235,0.15)] cursor-not-allowed opacity-60">
                   <span className="tg-mask" aria-hidden="true" />
                 </Button>
-                <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
+                <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
               </div>
-              <div className="relative group">
-                <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
-                  <span className="tg-mask" aria-hidden="true" />
-                </Button>
-                <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
-              </div>
+              {/* NinjaTrader tab hidden for now
               <Link href="/ninjatrader">
                 <Button variant="ghost" className="px-2 sm:px-4 py-1 text-sm rounded-full h-6 sm:h-8 flex items-center bg-transparent hover:bg-white/10">
                   <Image
@@ -327,6 +567,7 @@ export default function HomePage() {
                   />
                 </Button>
               </Link>
+              */}
             </motion.div>
           </div>
         </div>

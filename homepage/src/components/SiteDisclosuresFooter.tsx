@@ -125,8 +125,8 @@ export default function SiteDisclosuresFooter({
         </div>
       </section>
 
-      <footer dir="ltr" className="border-t border-blue-500/10 py-8 px-6 bg-[#030014]">
-        <div className="max-w-7xl mx-auto text-left">
+      <footer dir={isArabic ? "rtl" : "ltr"} className="border-t border-blue-500/10 py-8 px-6 bg-[#030014]">
+        <div className={`max-w-7xl mx-auto ${isArabic ? "text-right" : "text-left"}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="md:col-span-1">
               <Link
@@ -188,7 +188,7 @@ export default function SiteDisclosuresFooter({
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="mailto:support@talaria-log.com"
+                    href="mailto:support-center@talaria-log.com"
                     className="text-neutral-400 hover:text-white text-sm"
                   >
                     {t.footer.emailSupport}
@@ -196,10 +196,10 @@ export default function SiteDisclosuresFooter({
                 </li>
               </ul>
               <a
-                href="mailto:support@talaria-log.com"
+                href="mailto:support-center@talaria-log.com"
                 className="text-blue-400 hover:text-blue-300 text-sm"
               >
-                support@talaria-log.com
+                support-center@talaria-log.com
               </a>
             </div>
           </div>

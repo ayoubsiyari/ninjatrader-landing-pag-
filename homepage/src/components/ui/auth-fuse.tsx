@@ -190,7 +190,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
 );
 PasswordInput.displayName = "PasswordInput";
 
-function SignInForm({ prefillEmail, bannerMessage, nextPath }: { prefillEmail?: string; bannerMessage?: string | null; nextPath?: string }) {
+function SignInForm({ prefillEmail, bannerMessage, nextPath, onForgotPassword }: { prefillEmail?: string; bannerMessage?: string | null; nextPath?: string; onForgotPassword: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -237,7 +237,12 @@ function SignInForm({ prefillEmail, bannerMessage, nextPath }: { prefillEmail?: 
       </div>
       <div className="grid gap-4">
         <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" defaultValue={prefillEmail || ""} /></div>
-        <PasswordInput name="password" label="Password" required autoComplete="current-password" placeholder="Password" />
+        <div className="grid gap-2">
+          <PasswordInput name="password" label="Password" required autoComplete="current-password" placeholder="Password" />
+          <div className="text-right">
+            <AuthButton type="button" variant="link" className="p-0 h-auto text-xs" onClick={onForgotPassword}>Forgot password?</AuthButton>
+          </div>
+        </div>
         {bannerMessage && <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{bannerMessage}</div>}
         {error && <div className="text-sm text-red-500">{error}</div>}
         <AuthButton type="submit" variant="outline" className="mt-2" disabled={loading}>{loading ? "Signing In..." : "Sign In"}</AuthButton>
@@ -246,7 +251,285 @@ function SignInForm({ prefillEmail, bannerMessage, nextPath }: { prefillEmail?: 
   );
 }
 
-function SignUpForm({ onSignedUp, nextPath }: { onSignedUp: (email: string) => void; nextPath?: string }) {
+function ForgotPasswordForm({ onBack, onCodeSent }: { onBack: () => void; onCodeSent: (email: string) => void }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (!isValidEmail(email.trim())) {
+        setError("Please enter a valid email");
+        return;
+      }
+
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body && body.detail) ? String(body.detail) : "Failed to send reset code");
+        return;
+      }
+
+      onCodeSent(email.trim());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Forgot password?</h1>
+        <p className="text-balance text-sm text-muted-foreground">Enter your email and we'll send you a reset code</p>
+      </div>
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        {error && <div className="text-sm text-red-500">{error}</div>}
+        <AuthButton type="submit" variant="outline" className="mt-2" disabled={loading || !email.trim()}>
+          {loading ? "Sending..." : "Send Reset Code"}
+        </AuthButton>
+        <AuthButton type="button" variant="link" onClick={onBack} className="p-0 h-auto">
+          ← Back to sign in
+        </AuthButton>
+      </div>
+    </form>
+  );
+}
+
+function ResetPasswordForm({ email, onBack, onSuccess }: { email: string; onBack: () => void; onSuccess: () => void }) {
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (code.length !== 6) {
+        setError("Please enter a 6-digit code");
+        return;
+      }
+
+      const passwordErr = validatePassword(newPassword);
+      if (passwordErr) {
+        setError(passwordErr);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code, new_password: newPassword }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body && body.detail) ? String(body.detail) : "Failed to reset password");
+        return;
+      }
+
+      onSuccess();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setError(null);
+    setResendSuccess(false);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body && body.detail) ? String(body.detail) : "Failed to resend code");
+        return;
+      }
+
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 3000);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Reset password</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          Enter the code sent to <strong>{email}</strong>
+        </p>
+      </div>
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="code">Reset Code</Label>
+          <Input
+            id="code"
+            name="code"
+            type="text"
+            placeholder="123456"
+            required
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="text-center text-2xl tracking-widest"
+          />
+        </div>
+        <div className="grid gap-2">
+          <PasswordInput name="newPassword" label="New Password" required placeholder="New password" value={newPassword} onChange={(e) => setNewPassword((e.target as HTMLInputElement).value)} />
+          <div className="text-xs text-muted-foreground">Minimum 8 characters</div>
+        </div>
+        <div className="grid gap-2">
+          <PasswordInput name="confirmPassword" label="Confirm Password" required placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword((e.target as HTMLInputElement).value)} />
+        </div>
+        {error && <div className="text-sm text-red-500">{error}</div>}
+        {resendSuccess && <div className="text-sm text-green-500">Code sent successfully!</div>}
+        <AuthButton type="submit" variant="outline" className="mt-2" disabled={loading || code.length !== 6}>
+          {loading ? "Resetting..." : "Reset Password"}
+        </AuthButton>
+        <div className="flex justify-between text-sm">
+          <AuthButton type="button" variant="link" onClick={onBack} className="p-0 h-auto">
+            ← Back
+          </AuthButton>
+          <AuthButton type="button" variant="link" onClick={handleResend} disabled={resending} className="p-0 h-auto">
+            {resending ? "Sending..." : "Resend code"}
+          </AuthButton>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function VerificationForm({ email, onVerified, onBack, nextPath }: { email: string; onVerified: () => void; onBack: () => void; nextPath?: string }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, code: code.trim() }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body && body.detail) ? String(body.detail) : "Verification failed");
+        return;
+      }
+
+      const safeNext = nextPath && nextPath.startsWith("/") ? nextPath : null;
+      window.location.href = safeNext || "/";
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setError(null);
+    setResendSuccess(false);
+
+    try {
+      const res = await fetch("/api/auth/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body && body.detail) ? String(body.detail) : "Failed to resend code");
+        return;
+      }
+
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 3000);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleVerify} className="flex flex-col gap-8">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Verify your email</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          We sent a 6-digit code to <strong>{email}</strong>
+        </p>
+      </div>
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="code">Verification Code</Label>
+          <Input
+            id="code"
+            name="code"
+            type="text"
+            placeholder="123456"
+            required
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="text-center text-2xl tracking-widest"
+          />
+        </div>
+        {error && <div className="text-sm text-red-500">{error}</div>}
+        {resendSuccess && <div className="text-sm text-green-500">Code sent successfully!</div>}
+        <AuthButton type="submit" variant="outline" className="mt-2" disabled={loading || code.length !== 6}>
+          {loading ? "Verifying..." : "Verify Email"}
+        </AuthButton>
+        <div className="flex justify-between text-sm">
+          <AuthButton type="button" variant="link" onClick={onBack} className="p-0 h-auto">
+            ← Back
+          </AuthButton>
+          <AuthButton type="button" variant="link" onClick={handleResend} disabled={resending} className="p-0 h-auto">
+            {resending ? "Sending..." : "Resend code"}
+          </AuthButton>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function SignUpForm({ onSignedUp, onNeedsVerification, nextPath }: { onSignedUp: (email: string) => void; onNeedsVerification: (email: string) => void; nextPath?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -285,19 +568,19 @@ function SignUpForm({ onSignedUp, nextPath }: { onSignedUp: (email: string) => v
         body: JSON.stringify({ name: trimmedName, email: trimmedEmail, password }),
       });
 
+      const body = await signupRes.json().catch(() => null);
+
       if (!signupRes.ok) {
-        const body = await signupRes.json().catch(() => null);
         setError((body && body.detail) ? String(body.detail) : "Sign up failed");
         return;
       }
 
-      try {
-        await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-      } catch {
-        // ignore
+      // Check if verification is required
+      if (body && body.requires_verification) {
+        onNeedsVerification(trimmedEmail);
+      } else {
+        onSignedUp(trimmedEmail);
       }
-
-      onSignedUp(trimmedEmail);
     } finally {
       setLoading(false);
     }
@@ -335,31 +618,59 @@ function SignUpForm({ onSignedUp, nextPath }: { onSignedUp: (email: string) => v
   );
 }
 
-function AuthFormContainer({ isSignIn, onToggle, onSignedUp, prefillEmail, bannerMessage, nextPath }: { isSignIn: boolean; onToggle: () => void; onSignedUp: (email: string) => void; prefillEmail?: string; bannerMessage?: string | null; nextPath?: string }) {
+function AuthFormContainer({ isSignIn, onToggle, onSignedUp, onNeedsVerification, verificationEmail, onBackFromVerification, prefillEmail, bannerMessage, nextPath, forgotPasswordMode, resetPasswordEmail, onForgotPassword, onBackFromForgot, onResetCodeSent, onPasswordReset }: { isSignIn: boolean; onToggle: () => void; onSignedUp: (email: string) => void; onNeedsVerification: (email: string) => void; verificationEmail: string | null; onBackFromVerification: () => void; prefillEmail?: string; bannerMessage?: string | null; nextPath?: string; forgotPasswordMode: boolean; resetPasswordEmail: string | null; onForgotPassword: () => void; onBackFromForgot: () => void; onResetCodeSent: (email: string) => void; onPasswordReset: () => void }) {
+    const showExtraOptions = !verificationEmail && !forgotPasswordMode && !resetPasswordEmail;
+    
     return (
         <div className="mx-auto grid w-[350px] gap-4">
             <div className="flex flex-col items-center gap-2 mb-4">
                 <img src="/logo-08.png" alt="Talaria Log" className="h-20 w-20" />
                 <span className="text-xl font-bold text-foreground">Talaria Log</span>
             </div>
-            {isSignIn ? (
-              <SignInForm prefillEmail={prefillEmail} bannerMessage={bannerMessage} nextPath={nextPath} />
+            {resetPasswordEmail ? (
+              <ResetPasswordForm 
+                email={resetPasswordEmail} 
+                onBack={onBackFromForgot} 
+                onSuccess={onPasswordReset} 
+              />
+            ) : forgotPasswordMode ? (
+              <ForgotPasswordForm 
+                onBack={onBackFromForgot} 
+                onCodeSent={onResetCodeSent} 
+              />
+            ) : verificationEmail ? (
+              <VerificationForm 
+                email={verificationEmail} 
+                onVerified={() => {}} 
+                onBack={onBackFromVerification} 
+                nextPath={nextPath} 
+              />
+            ) : isSignIn ? (
+              <SignInForm prefillEmail={prefillEmail} bannerMessage={bannerMessage} nextPath={nextPath} onForgotPassword={onForgotPassword} />
             ) : (
-              <SignUpForm onSignedUp={onSignedUp} nextPath={nextPath} />
+              <SignUpForm onSignedUp={onSignedUp} onNeedsVerification={onNeedsVerification} nextPath={nextPath} />
             )}
-            <div className="text-center text-sm">
-                {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
-                <AuthButton variant="link" className="pl-1 text-foreground" onClick={onToggle}>
-                    {isSignIn ? "Sign up" : "Sign in"}
-                </AuthButton>
-            </div>
-            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-            <AuthButton variant="outline" type="button" onClick={() => console.log("UI: Google button clicked")}>
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" className="mr-2 h-4 w-4" />
-                Continue with Google
-            </AuthButton>
+            {showExtraOptions && (
+              <>
+                <div className="text-center text-sm">
+                    {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
+                    <AuthButton variant="link" className="pl-1 text-foreground" onClick={onToggle}>
+                        {isSignIn ? "Sign up" : "Sign in"}
+                    </AuthButton>
+                </div>
+                <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+                    <span className="relative z-10 bg-background px-2 text-muted-foreground">2025 Mentorship</span>
+                </div>
+                <a href="/journal/login" className="inline-block w-full">
+                    <AuthButton variant="outline" type="button" className="w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                        </svg>
+                        2025 Mentorship Login
+                    </AuthButton>
+                </a>
+              </>
+            )}
         </div>
     )
 }
@@ -408,6 +719,9 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, initialMode = "
   const [isSignIn, setIsSignIn] = useState(initialMode !== "signup");
   const [prefillEmail, setPrefillEmail] = useState<string>("");
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [resetPasswordEmail, setResetPasswordEmail] = useState<string | null>(null);
   const toggleForm = () => setIsSignIn((prev) => !prev);
 
   const finalSignInContent = {
@@ -422,7 +736,7 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, initialMode = "
   const currentContent = isSignIn ? finalSignInContent : finalSignUpContent;
 
   return (
-    <div className="w-full min-h-screen md:grid md:grid-cols-2">
+    <div dir="ltr" className="w-full min-h-screen md:grid md:grid-cols-2">
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
@@ -436,6 +750,22 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, initialMode = "
           prefillEmail={prefillEmail}
           bannerMessage={bannerMessage}
           nextPath={nextPath}
+          verificationEmail={verificationEmail}
+          onBackFromVerification={() => setVerificationEmail(null)}
+          onNeedsVerification={(email) => setVerificationEmail(email)}
+          forgotPasswordMode={forgotPasswordMode}
+          resetPasswordEmail={resetPasswordEmail}
+          onForgotPassword={() => setForgotPasswordMode(true)}
+          onBackFromForgot={() => {
+            setForgotPasswordMode(false);
+            setResetPasswordEmail(null);
+          }}
+          onResetCodeSent={(email) => setResetPasswordEmail(email)}
+          onPasswordReset={() => {
+            setForgotPasswordMode(false);
+            setResetPasswordEmail(null);
+            setBannerMessage("Password reset successfully. Please sign in.");
+          }}
           onSignedUp={(email) => {
             setPrefillEmail(email);
             setBannerMessage("Account created successfully. Please sign in.");

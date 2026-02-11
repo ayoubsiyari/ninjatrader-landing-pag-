@@ -467,23 +467,18 @@ export default function BootcampPage() {
               </Button>
             </Link>
             <div className="relative group">
-              <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
+              <Button className="rounded-full text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 text-white/50 bg-gradient-to-r from-black via-blue-900/50 to-blue-600/50 shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_18px_45px_rgba(37,99,235,0.15)] cursor-not-allowed opacity-60">
                 <span className="tg-mask" aria-hidden="true" />
               </Button>
-              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
+              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
             </div>
             <div className="relative group">
-              <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
+              <Button className="rounded-full text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 text-white/50 bg-gradient-to-r from-black via-blue-900/50 to-blue-600/50 shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_18px_45px_rgba(37,99,235,0.15)] cursor-not-allowed opacity-60">
                 <span className="tg-mask" aria-hidden="true" />
               </Button>
-              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
+              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
             </div>
-            <div className="relative group">
-              <Button variant="ghost" className="text-white/50 cursor-not-allowed px-2 sm:px-4 py-1 text-xs sm:text-sm rounded-full h-6 sm:h-8">
-                <span className="tg-mask" aria-hidden="true" />
-              </Button>
-              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
-            </div>
+            {/* NinjaTrader tab hidden for now
             <Link href="/ninjatrader">
               <Button variant="ghost" className="px-2 sm:px-4 py-1 text-sm rounded-full h-6 sm:h-8 flex items-center bg-transparent hover:bg-white/10">
                 <Image
@@ -495,6 +490,7 @@ export default function BootcampPage() {
                 />
               </Button>
             </Link>
+            */}
           </motion.div>
         </div>
       </div>
@@ -666,58 +662,21 @@ export default function BootcampPage() {
                           (isArabic ? "-left-12 sm:-left-16 -rotate-45" : "-right-12 sm:-right-16 rotate-45")
                         }
                       >
-                        <motion.div
-                          className="relative flex items-center justify-center rounded-sm bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 text-black w-40 sm:w-56 px-0 py-2 sm:py-3 text-[10px] sm:text-[13px] font-extrabold shadow-[0_18px_55px_rgba(16,185,129,0.55)] ring-1 ring-emerald-200/50"
-                          animate={{ scale: [1, 1.04, 1] }}
-                          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                          <motion.div
-                            className="absolute inset-0 opacity-40"
-                            style={{
-                              background:
-                                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%)",
-                            }}
-                            animate={{ x: ["-130%", "130%"] }}
-                            transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                          />
+                        <div className="relative flex items-center justify-center rounded-sm bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 text-black w-40 sm:w-56 px-0 py-2 sm:py-3 text-[10px] sm:text-[13px] font-extrabold">
                           <div
                             dir={isArabic ? "rtl" : "ltr"}
-                            className={
-                              "relative z-10 font-black leading-none text-center"
-                            }
+                            className="relative z-10 leading-none text-center"
                           >
-                            <div className="flex flex-col items-center justify-center gap-0.5">
-                              <span className="relative inline-block text-[9px] sm:text-[12px] font-black">
-                                <span className="relative" dir="ltr">100$</span>
-                                <span
-                                  aria-hidden="true"
-                                  className={
-                                    "pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-[125%] -translate-x-1/2 -translate-y-1/2 " +
-                                    "rotate-12" +
-                                    " bg-black/90"
-                                  }
-                                />
-                                <span
-                                  aria-hidden="true"
-                                  className={
-                                    "pointer-events-none absolute left-1/2 top-1/2 h-px w-[125%] -translate-x-1/2 -translate-y-1/2 " +
-                                    "rotate-12" +
-                                    " bg-purple-600"
-                                  }
-                                />
+                            <div className="flex flex-row items-center justify-center gap-1.5 w-full font-zain">
+                              <span className="text-[12px] sm:text-[14px] font-semibold text-gray-600 line-through decoration-gray-600" dir="ltr">
+                                $100
                               </span>
-                              <span
-                                className={
-                                  isArabic
-                                    ? "text-[10px] sm:text-[13px] font-black"
-                                    : "text-[10px] sm:text-[13px] font-extrabold tracking-[0.28em]"
-                                }
-                              >
-                                {isArabic ? "مجاني" : "FREE"}
+                              <span className="text-[12px] sm:text-[14px] font-semibold text-black" dir="ltr">
+                                $0
                               </span>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       </div>
                     </div>
                   ) : null}

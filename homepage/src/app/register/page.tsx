@@ -397,6 +397,13 @@ export default function RegisterPage() {
           const nextEmail = typeof user.email === "string" ? user.email : "";
           setFullName(nextName);
           setEmail(nextEmail);
+          if (typeof user.phone === "string" && user.phone) {
+            setPhone(user.phone);
+          }
+          if (typeof user.country === "string" && user.country) {
+            setCountry(user.country);
+            setCountryQuery(user.country);
+          }
         }
         if (!authed) {
           window.location.href = "/login/?mode=signin&next=/register/";
@@ -482,7 +489,7 @@ export default function RegisterPage() {
                 "\t•\tالمواد التعليمية: سيتم توزيع الفيديوهات والملفات والأدوات وفق خطة زمنية محددة، ولا يحق للمنتسب المطالبة بتغيير ترتيب عرض المواد.",
                 "\t•\tالاستقلالية في التنفيذ: يلتزم المنتسب باتخاذ قراراته وتنفيذ صفقاته بنفسه. لا تضمن تالاريا نجاح الصفقات، ولها الحق في عدم تقديم توصيات أو تحليلات مباشرة إذا لم ترَ حاجة لذلك.",
                 "ثالثاً: المواعيد والظروف القاهرة",
-                "\t•\tفترة البرنامج: تبدأ المِنتورشيب من 6  يوليو 2025 وحتى 31  يوليو 2026.",
+                "\t•\tفترة البرنامج: تبدأ المِنتورشيب من 6  يوليو 2026 و تستمر لمدة اربعة اسابيع متتالية",
                 "\t•\tأ: يحق لتالاريا تأجيل البداية لمدة لا تتجاوز 30 يوماً للظروف القاهرة، مع الالتزام برد الرسوم كاملة إذا تجاوز التأجيل هذه المدة.",
                 "\t•\tب: في حال توقف البرنامج لظروف قاهرة لمدة تزيد عن 15 يوماً بعد بدئه، يتم رد الرسوم، مع التأكيد على أن مدة التعلم الفعلية تظل 4 أسابيع.",
                 "\t•\tالحضور والتسجيل: سيتم تتبع الحضور عبر برنامج خاص، ولا تلتزم تالاريا بتسجيل البث المباشر إلا وفقاً لما تراه مناسباً.",
@@ -495,7 +502,7 @@ export default function RegisterPage() {
                 "\t•\tالقرار المستنير: ننصح بمتابعة الكورس المجاني على يوتيوب أولاً، وعلى المنتسب التأكد من حاجته الفعليه للمنتورشيب قبل التسجيل.",
                 "\t•\tاكتمال العدد: يتم إغلاق باب القبول فور اكتمال العدد المحدد لضمان جودة الإدارة، ولا تُقبل أي طلبات إضافية بعدها.",
                 "\t•\tحجية الاتفاق: يعتبر ملء هذه الاستمارة وإرسالها موافقة نهائية و ملزمة ، ولا يجوز الطعن فيها.",
-                "\t•\tآلية الرد: يتم الرد على الطلبات خلال 72 ساعة عبر البريد الرسمي (suport@talaria-log.com) ، مع تفاصيل الدفع (بالعملات الرقمية فقط).",
+                "\t•\tآلية الرد: يتم الرد على الطلبات خلال 72 ساعة عبر البريد الرسمي (support-center@talaria-log.com) ، مع تفاصيل الدفع (بالعملات الرقمية فقط).",
               ],
               rulesNote:
                 "بإرسال هذه الاستمارة، فأنت تقر بموافقتك على البنود أعلاه وتقبل سياساتنا القانونية.",
@@ -570,9 +577,9 @@ export default function RegisterPage() {
             success: {
               title: "تم إرسال التسجيل",
               thanksA: "شكراً، ",
-              thanksB: ". تم استلام طلبك وسنتواصل معك عبر ",
+              thanksB: " سنتواصل معك عبر ايميلك ",
               checkEmail:
-                "يرجى التحقق من صندوق البريد (وأيضاً مجلد الرسائل غير المرغوب فيها) للتحديثات.",
+                "يرجى التحقق من صندوق البريد (وأيضاً مجلد الرسائل غير المرغوب فيها)",
               summary: "ملخص (محلي فقط):",
               country: "الدولة:",
               age: "العمر:",
@@ -609,7 +616,7 @@ export default function RegisterPage() {
                 "Acceptance & registration — Informed decision: We strongly recommend following the free YouTube course first and ensuring you truly need the mentorship before enrolling.",
                 "Acceptance & registration — Capacity: Admissions will close once capacity is reached to ensure quality. No additional applications will be accepted after closure.",
                 "Acceptance & registration — Binding agreement: Submitting this form constitutes final and legally binding acceptance. It may be relied upon in court and may not be contested.",
-                "Acceptance & registration — Response: Applications are reviewed periodically. You will receive a reply within 72 hours from our official email (info@talaria-log.com) with crypto-only payment details.",
+                "Acceptance & registration — Response: Applications are reviewed periodically. You will receive a reply within 72 hours from our official email (support-center@talaria-log.com) with crypto-only payment details.",
               ],
               rulesNote:
                 "By submitting this form, you confirm your acceptance of the terms above and our legal policies.",
@@ -817,7 +824,11 @@ export default function RegisterPage() {
     if (!fullName.trim()) next.fullName = t.validation.fullNameRequired;
     if (!email.trim() || !isValidEmail(email.trim())) next.email = t.validation.emailInvalid;
     if (!country.trim()) next.country = t.validation.countryRequired;
-    if (phone.trim() && country.trim() && !isValidPhone(phone.trim(), selectedDial)) next.phone = t.validation.phoneInvalid;
+    // Only validate phone if user entered more than just the dial code
+    const phoneCompact = (phone || "").replace(/\s+/g, "");
+    const dialCompact = (selectedDial || "").replace(/\s+/g, "");
+    const hasRealPhone = phoneCompact && dialCompact && phoneCompact !== dialCompact;
+    if (hasRealPhone && !isValidPhone(phone.trim(), selectedDial)) next.phone = t.validation.phoneInvalid;
     if (!age.trim()) next.age = t.validation.ageRequired;
     if (age.trim() && (!Number.isFinite(Number(age.trim())) || Number(age.trim()) <= 0)) next.age = t.validation.ageInvalid;
     if (
@@ -845,6 +856,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     setSubmitError("");
     try {
+      // Only send phone if it's more than just the dial code
+      const submitPhoneCompact = (phone || "").replace(/\s+/g, "");
+      const submitDialCompact = (selectedDial || "").replace(/\s+/g, "");
+      const hasSubmitPhone = submitPhoneCompact && submitDialCompact && submitPhoneCompact !== submitDialCompact;
       const res = await fetch("/api/bootcamp/register", {
         credentials: "include",
         method: "POST",
@@ -852,7 +867,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           full_name: fullName,
           email,
-          ...(phone.trim() ? { phone } : {}),
+          ...(hasSubmitPhone ? { phone } : {}),
           country,
           age: Number(age),
           ...(telegram.trim() ? { telegram } : {}),
@@ -921,7 +936,13 @@ export default function RegisterPage() {
             <span className="text-base sm:text-2xl font-bold text-white whitespace-nowrap">Talaria-Log</span>
           </Link>
 
-          <div className="flex items-center gap-3" />
+          <Link 
+            href="/bootcamp" 
+            className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors px-3 py-1.5 rounded-full border border-white/10 hover:border-white/20 bg-white/5"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{isArabic ? "رجوع" : "Back"}</span>
+          </Link>
         </div>
       </nav>
 
