@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "./LanguageProvider";
+import { useLanguage, AppLanguage } from "./LanguageProvider";
 import SiteDisclosuresFooter from "@/components/SiteDisclosuresFooter";
 import Image from "next/image";
 import {
@@ -29,7 +29,7 @@ const talariaBrands = [
 ];
 
 export default function HomePage() {
-  const { isArabic } = useLanguage();
+  const { isArabic, toggleLanguage, language } = useLanguage();
 
   const t = React.useMemo(
     () =>
@@ -257,6 +257,14 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleLanguage}
+                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
+              >
+                {language === "en" ? "AR" : "EN"}
+              </Button>
               <Button
                 asChild
                 variant="ghost"
