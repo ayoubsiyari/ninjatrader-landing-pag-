@@ -65,7 +65,7 @@ const COUNTRIES = [
 ];
 
 export default function HomePage() {
-  const { isArabic } = useLanguage();
+  const { isArabic, toggleLanguage, language } = useLanguage();
   const [user, setUser] = React.useState<{ id: number; name: string; email: string; phone?: string; country?: string } | null>(null);
   const [showProfile, setShowProfile] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
@@ -377,6 +377,14 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleLanguage}
+                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
+              >
+                {language === "en" ? "AR" : "EN"}
+              </Button>
               {user ? (
                 <>
                   <div className="relative" ref={profileRef}>
@@ -555,7 +563,6 @@ export default function HomePage() {
                 </Button>
                 <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
               </div>
-              {/* NinjaTrader tab hidden for now
               <Link href="/ninjatrader">
                 <Button variant="ghost" className="px-2 sm:px-4 py-1 text-sm rounded-full h-6 sm:h-8 flex items-center bg-transparent hover:bg-white/10">
                   <Image
@@ -567,7 +574,6 @@ export default function HomePage() {
                   />
                 </Button>
               </Link>
-              */}
             </motion.div>
           </div>
         </div>
