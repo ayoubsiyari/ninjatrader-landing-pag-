@@ -7,6 +7,7 @@ import { ChevronDown, ArrowLeft, ExternalLink } from "lucide-react";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Button } from "@/components/ui/button";
 import SiteDisclosuresFooter from "@/components/SiteDisclosuresFooter";
+import { useLanguage } from "../LanguageProvider";
 
 import NinjaTraderWordmark from "../../../ninjatrader/Landing-Page-Text-Images/NinjaTrader/NinjaTrader_Wordmark_color_RGB.png";
 import NinjaTraderMonitor from "../../../ninjatrader/Landing-Page-Text-Images/NinjaTrader/NinjaTrader_Monitor_Image.png";
@@ -20,7 +21,7 @@ const talariaBrands = [
 ];
 
 export default function NinjaTraderPage() {
-  const isArabic = false;
+  const { isArabic, toggleLanguage, language } = useLanguage();
   const t = React.useMemo(
     () =>
       isArabic
@@ -131,16 +132,6 @@ export default function NinjaTraderPage() {
     [isArabic]
   );
 
-  React.useEffect(() => {
-    const prevDir = document.documentElement.dir;
-    const prevLang = document.documentElement.lang;
-    document.documentElement.dir = "ltr";
-    document.documentElement.lang = "en";
-    return () => {
-      document.documentElement.dir = prevDir;
-      document.documentElement.lang = prevLang;
-    };
-  }, []);
 
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const closeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -293,6 +284,14 @@ export default function NinjaTraderPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end"
           >
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleLanguage}
+                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
+              >
+                {language === "en" ? "AR" : "EN"}
+              </Button>
             <Link href="/">
               <Button variant="ghost" className="text-white hover:text-blue-400 px-3 sm:px-4">
                 <ArrowLeft className={`w-4 h-4 ${isArabic ? "ml-2" : "mr-2"}`} />
