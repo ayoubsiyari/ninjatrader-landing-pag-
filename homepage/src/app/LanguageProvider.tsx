@@ -13,30 +13,38 @@ type LanguageContextValue = {
 
 const LanguageContext = React.createContext<LanguageContextValue | null>(null);
 
-function readInitialLanguage(): AppLanguage {
-  return "ar";
-}
-
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = React.useState<AppLanguage>(readInitialLanguage);
+  const [language, setLanguageState] = React.useState<AppLanguage>("en");
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+    try {
+      const saved = window.localStorage.getItem("talaria_language");
+      if (saved === "ar" || saved === "en") {
+        setLanguageState(saved);
+      }
+    } catch {}
+  }, []);
 
   const setLanguage = React.useCallback((lang: AppLanguage) => {
-    setLanguageState("ar");
+    setLanguageState(lang);
   }, []);
 
   const toggleLanguage = React.useCallback(() => {
-    setLanguageState("ar");
+    setLanguageState((prev) => (prev === "ar" ? "en" : "ar"));
   }, []);
 
   const isArabic = language === "ar";
 
   React.useEffect(() => {
+    if (!mounted) return;
     document.documentElement.lang = language;
     document.documentElement.dir = isArabic ? "rtl" : "ltr";
     try {
-      window.localStorage.setItem("talaria_language", "ar");
+      window.localStorage.setItem("talaria_language", language);
     } catch {}
-  }, [language, isArabic]);
+  }, [language, isArabic, mounted]);
 
   const value = React.useMemo<LanguageContextValue>(
     () => ({ language, setLanguage, toggleLanguage, isArabic }),
