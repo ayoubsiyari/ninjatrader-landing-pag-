@@ -14,26 +14,21 @@ type LanguageContextValue = {
 const LanguageContext = React.createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = React.useState<AppLanguage>("ar");
+  // Always Arabic - no localStorage override
+  const [language] = React.useState<AppLanguage>("ar");
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
+    // Clear any old language preference
     try {
-      const saved = window.localStorage.getItem("talaria_language");
-      if (saved === "ar" || saved === "en") {
-        setLanguageState(saved);
-      }
+      window.localStorage.removeItem("talaria_language");
     } catch {}
   }, []);
 
-  const setLanguage = React.useCallback((lang: AppLanguage) => {
-    setLanguageState(lang);
-  }, []);
-
-  const toggleLanguage = React.useCallback(() => {
-    setLanguageState((prev) => (prev === "ar" ? "en" : "ar"));
-  }, []);
+  // No-op functions since language is fixed to Arabic
+  const setLanguage = React.useCallback((_lang: AppLanguage) => {}, []);
+  const toggleLanguage = React.useCallback(() => {}, []);
 
   const isArabic = language === "ar";
 
@@ -41,9 +36,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
     document.documentElement.lang = language;
     document.documentElement.dir = isArabic ? "rtl" : "ltr";
-    try {
-      window.localStorage.setItem("talaria_language", language);
-    } catch {}
   }, [language, isArabic, mounted]);
 
   const value = React.useMemo<LanguageContextValue>(
