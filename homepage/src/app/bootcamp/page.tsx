@@ -478,19 +478,17 @@ export default function BootcampPage() {
               </Button>
               <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold">{t.tabs.soon}</span>
             </div>
-            {/* NinjaTrader tab hidden for now
             <Link href="/ninjatrader">
-              <Button variant="ghost" className="px-2 sm:px-4 py-1 text-sm rounded-full h-6 sm:h-8 flex items-center bg-transparent hover:bg-white/10">
+              <Button className="rounded-full text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 text-white bg-gradient-to-r from-black via-blue-900 to-blue-600 hover:from-black hover:via-blue-800 hover:to-blue-500 shadow-[0_0_0_1px_rgba(59,130,246,0.25),0_18px_45px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_1px_rgba(59,130,246,0.4),0_22px_55px_rgba(37,99,235,0.32)] transition-all flex items-center">
                 <Image
                   src={NinjaTraderWordmark}
                   alt="NinjaTrader"
                   width={112}
-                  height={16}
-                  className="h-3 sm:h-4 w-auto object-contain mix-blend-screen"
+                  height={20}
+                  className="h-4 sm:h-5 w-auto object-contain"
                 />
               </Button>
             </Link>
-            */}
           </motion.div>
         </div>
       </div>
