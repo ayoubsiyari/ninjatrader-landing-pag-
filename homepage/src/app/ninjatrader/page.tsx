@@ -7,7 +7,6 @@ import { ChevronDown, ArrowLeft, ExternalLink } from "lucide-react";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Button } from "@/components/ui/button";
 import SiteDisclosuresFooter from "@/components/SiteDisclosuresFooter";
-import { useLanguage } from "../LanguageProvider";
 
 import NinjaTraderWordmark from "../../../ninjatrader/Landing-Page-Text-Images/NinjaTrader/NinjaTrader_Wordmark_color_RGB.png";
 import NinjaTraderMonitor from "../../../ninjatrader/Landing-Page-Text-Images/NinjaTrader/NinjaTrader_Monitor_Image.png";
@@ -21,7 +20,8 @@ const talariaBrands = [
 ];
 
 export default function NinjaTraderPage() {
-  const { isArabic, toggleLanguage, language } = useLanguage();
+  // NinjaTrader page is always in English
+  const isArabic = false;
   const t = React.useMemo(
     () =>
       isArabic
@@ -164,15 +164,6 @@ export default function NinjaTraderPage() {
 
   return (
     <main className="relative min-h-screen bg-[#030014] overflow-x-hidden">
-      {/* Fixed Language Toggle - Right Corner */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={toggleLanguage}
-        className="fixed top-4 right-4 z-[100] rounded-full border border-white/20 bg-black/50 backdrop-blur-sm text-white hover:bg-white/10 text-xs sm:text-sm px-3 sm:px-4 py-2 font-medium shadow-lg"
-      >
-        {language === "en" ? "العربية" : "English"}
-      </Button>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-black via-[#030014] to-[#0a0a1a]" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
 
