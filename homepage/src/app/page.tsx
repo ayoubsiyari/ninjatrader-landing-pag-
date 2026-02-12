@@ -266,6 +266,15 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#030014] overflow-hidden">
+      {/* Fixed Language Toggle - Right Corner */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleLanguage}
+        className="fixed top-4 right-4 z-[100] rounded-full border border-white/20 bg-black/50 backdrop-blur-sm text-white hover:bg-white/10 text-xs sm:text-sm px-3 sm:px-4 py-2 font-medium shadow-lg"
+      >
+        {language === "en" ? "العربية" : "English"}
+      </Button>
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Dark gradient overlays */}
@@ -377,14 +386,6 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleLanguage}
-                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
-              >
-                {language === "en" ? "AR" : "EN"}
-              </Button>
               {user ? (
                 <>
                   <div className="relative" ref={profileRef}>

@@ -130,7 +130,7 @@ const bootcampModulesAr = [
 ];
 
 export default function BootcampPage() {
-  const { isArabic } = useLanguage();
+  const { isArabic, toggleLanguage, language } = useLanguage();
   const [joinMenuOpen, setJoinMenuOpen] = React.useState(false);
   const [joinMenuLoading, setJoinMenuLoading] = React.useState(false);
 
@@ -340,6 +340,15 @@ export default function BootcampPage() {
 
   return (
     <main className="relative min-h-screen bg-[#030014] overflow-x-hidden">
+      {/* Fixed Language Toggle - Right Corner */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleLanguage}
+        className="fixed top-4 right-4 z-[100] rounded-full border border-white/20 bg-black/50 backdrop-blur-sm text-white hover:bg-white/10 text-xs sm:text-sm px-3 sm:px-4 py-2 font-medium shadow-lg"
+      >
+        {language === "en" ? "العربية" : "English"}
+      </Button>
       {/* Background */}
       <div className="fixed inset-0 -z-10 pointer-events-none bg-gradient-to-b from-black via-[#030014] to-[#0a0a1a]" />
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />

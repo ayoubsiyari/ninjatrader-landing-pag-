@@ -164,6 +164,15 @@ export default function NinjaTraderPage() {
 
   return (
     <main className="relative min-h-screen bg-[#030014] overflow-x-hidden">
+      {/* Fixed Language Toggle - Right Corner */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleLanguage}
+        className="fixed top-4 right-4 z-[100] rounded-full border border-white/20 bg-black/50 backdrop-blur-sm text-white hover:bg-white/10 text-xs sm:text-sm px-3 sm:px-4 py-2 font-medium shadow-lg"
+      >
+        {language === "en" ? "العربية" : "English"}
+      </Button>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-black via-[#030014] to-[#0a0a1a]" />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
 
@@ -284,14 +293,6 @@ export default function NinjaTraderPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end"
           >
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleLanguage}
-                className="rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3 font-medium"
-              >
-                {language === "en" ? "AR" : "EN"}
-              </Button>
             <Link href="/">
               <Button variant="ghost" className="text-white hover:text-blue-400 px-3 sm:px-4">
                 <ArrowLeft className={`w-4 h-4 ${isArabic ? "ml-2" : "mr-2"}`} />
