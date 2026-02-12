@@ -14,7 +14,7 @@ type LanguageContextValue = {
 const LanguageContext = React.createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = React.useState<AppLanguage>("en");
+  const [language, setLanguageState] = React.useState<AppLanguage>("ar");
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
